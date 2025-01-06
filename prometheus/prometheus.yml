@@ -1,0 +1,23 @@
+---
+global:
+  scrape_interval:      15s
+  scrape_timeout:       10s
+  evaluation_interval:  15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: 
+        - prometheus:9090
+
+  - job_name: tempo
+    static_configs:
+      - targets:
+        - tempo:3200
+
+  - job_name: open-telemetry-collector
+    static_configs:
+      - targets:
+        - open-telemetry-collector:8004
+        - open-telemetry-collector:8888
+

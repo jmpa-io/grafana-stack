@@ -1,0 +1,96 @@
+---
+# https://github.com/docker/awesome-compose/blob/master/prometheus-grafana/compose.yaml.
+# https://github.com/ruanbekker/grafana-tempo-loki-tracing/blob/main/docker-compose.yaml.
+
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: "1m"
+    max-file: "1"
+    tag: "{{.Name}}"
+
+x-labels:
+  &default-labels
+  logging: "promtail"
+  logging_jobname: "containerlogs"
+
+services:
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports: [3000:3000]
+    depends_on: [tempo]
+    networks: [obs-network]
+    logging: *default-logging
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+      - GF_USERS_DEFAULT_THEME=dark
+      - GF_INSTALL_PLUGINS=https://storage.googleapis.com/integration-artifacts/grafana-exploretraces-app/grafana-exploretraces-app-latest.zip;grafana-traces-app
+    volumes: [./grafana:/etc/grafana/provisioning/datasources]
+ 
+  tempo:
+    image: grafana/tempo
+    container_name: tempo
+    ports:
+      - 3200:3200   # tempo http
+      - 9095:9095   # tempo grpc
+      - 14268:14268 # jaeger ingest
+      - 4318:4318   # otlp http
+      - 4317:4317   # otlp grpc
+    volumes:
+      - ./tempo/config.yml:/etc/config.yml
+    command: ["-config.file=/etc/config.yml"]
+    networks: [obs-network] 
+    logging: *default-logging
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:  
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+    ports:    [9090:9090]
+    volumes:  [./prometheus:/etc/prometheus]
+    networks: [obs-network]
+    logging: *default-logging
+
+  loki:
+    image: grafana/loki
+    container_name: loki
+    command: [-config.file=/etc/loki/local-config.yaml] 
+    ports: [3100:3100]
+    networks: [obs-network]
+    logging: *default-logging
+
+  promtail:
+    image: grafana/promtail
+    container_name: promtail
+    depends_on: [loki]
+    command: [-config.file=/etc/promtail/config.yml]
+    networks: [obs-network]
+    volumes:
+      - ./promtail/config.yml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    logging: *default-logging
+
+  open-telemetry-collector:
+    image: otel/opentelemetry-collector-contrib
+    container_name: open-telemetry-collector
+    depends_on: [tempo]
+    command: [--config=file:/etc/config.yml]
+    ports: 
+      - 8004:8004
+      - 8888:8888
+    networks: [obs-network]
+    volumes:
+      - ./open-telemetry-collector/config.yml:/etc/config.yml
+
+networks:
+  obs-network:
+    name: obs-network 
+    driver: bridge
