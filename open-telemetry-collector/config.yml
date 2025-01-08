@@ -6,6 +6,9 @@ receivers:
   otlp:
     protocols:
       grpc:
+        endpoint: 127.0.0.1:4319
+        tls:
+          insecure: true
 
   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/prometheusreceiver
   prometheus/internal:
@@ -27,11 +30,11 @@ exporters:
 
   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/prometheusexporter
   prometheus:
-    endpoint: 127.0.0.0:8889
+    endpoint: 127.0.0.1:8889
 
   # https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/otlpexporter
   otlp:
-    endpoint: tempo:55681
+    endpoint: tempo:4318
     tls:
       insecure: true
 
@@ -58,4 +61,5 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [otlp]
+
 

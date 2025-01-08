@@ -1,4 +1,9 @@
+---
 apiVersion: 1
+
+deleteDatasources:
+  - name: Prometheus
+    orgId: 1
 
 datasources:
 
@@ -8,12 +13,18 @@ datasources:
   access: proxy
   orgId: 1
   url: http://prometheus:9090
+  user: ''
+  password: ''
+  database: ''
   basicAuth: false
   isDefault: false
   version: 1
   editable: false
   jsonData:
-    httpMethod: GET
+      exemplarTraceIdDestinations:
+        - datasourceUid: tempo
+          name: TraceID
+      httpMethod: POST
 
 - name: Tempo
   type: tempo
@@ -27,9 +38,19 @@ datasources:
   editable: false
   apiVersion: 1
   jsonData:
-    httpMethod: GET
-    serviceMap:
-      datasourceUid: Prometheus
+  nodeGraph:
+      enabled: true
+      search:
+        hide: false
+      lokiSearch:
+        datasourceUid: loki
+      tracesToLogs:
+        datasourceUid: loki
+        filterBySpanID: false
+        filterByTraceID: true
+        mapTagNamesEnabled: false
+        tags:
+          - compose_service
 
 - name: Loki
   type: loki
@@ -37,15 +58,17 @@ datasources:
   access: proxy
   orgId: 1
   url: http://loki:3100
+  user: ''
+  password: ''
+  database: ''
   basicAuth: false
   isDefault: false
   version: 1
   editable: false
   jsonData:
     derivedFields:
-    - datasourceName: Tempo
-      datasourceUid: tempo
-      matcherRegex: trace_id=(\w+)
-      name: traceID
-      url: '$${__value.raw}'
+      - datasourceUid: tempo
+        matcherRegex: (?:trace_id)=(\w+)
+        name: TraceID
+        url: $${__value.raw}
 

@@ -1,14 +1,18 @@
+
 # Default PROJECT, if not given by another Makefile.
 ifndef PROJECT
 PROJECT=grafana-stack
 endif
 
-# Services.
-SERVICES =
-# TODO: fill these out with services to deploy.
-
 # Targets.
-# TODO: fill these out with Make targets.
+run: ## ** Runs ALL docker-compose services.
+run:
+	docker-compose up \
+		--build \
+		--force-recreate \
+		--remove-orphans
+
+PHONY += run
 
 ---: ## ---
 
