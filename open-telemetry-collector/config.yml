@@ -6,10 +6,8 @@ receivers:
   otlp:
     protocols:
       grpc:
-        endpoint: 127.0.0.1:55690
 
-
-  # # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/prometheusreceiver
+  # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/prometheusreceiver
   prometheus/internal:
     config:
       scrape_configs:
@@ -19,20 +17,38 @@ receivers:
             - targets: ['127.0.0.1:8888']
 
 processors:
+
+  # https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor
   batch:
+    send_batch_size: 1000
+    timeout: 1s
 
 exporters:
- 
-  prometheus:
-    endpoint: 127.0.0.1:8004
 
-  otlp/traces:
+  # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/prometheusexporter
+  prometheus:
+    endpoint: 127.0.0.0:8889
+
+  # https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/otlpexporter
+  otlp:
     endpoint: tempo:55681
     tls:
       insecure: true
-      insecure_skip_verify: true
+
+extensions:
+ 
+  # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/healthcheckextension
+  health_check:
+
+  # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/pprofextension
+  pprof:
+
+  # https://github.com/open-telemetry/opentelemetry-collector/tree/main/extension/zpagesextension
+  zpages:
+
 
 service:
+  extensions: [health_check, pprof, zpages]
   pipelines:
     metrics:
       receivers: [prometheus/internal]
@@ -41,5 +57,5 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp/traces]
+      exporters: [otlp]
 

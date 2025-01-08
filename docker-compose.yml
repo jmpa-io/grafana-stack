@@ -51,6 +51,7 @@ services:
     container_name: prometheus
     command:  
       - --config.file=/etc/prometheus/prometheus.yml
+      - --no-scrape.adjust-timestamps
       - --web.enable-remote-write-receiver
       - --enable-feature=exemplar-storage
     ports:    [9090:9090]
@@ -84,11 +85,19 @@ services:
     depends_on: [tempo]
     command: [--config=file:/etc/config.yml]
     ports: 
-      - 8004:8004
-      - 8888:8888
+      - 4318:4318   # otlp (grpc) receiver.
+
+      - 1888:1888   # pprof extension.
+      - 13133:13133 # health_check extension.
+      - 55679:55679 # zpages extension.
+
+      - 8888:8888   # Prometheus metrics exposed by collector.
+      - 8889:8889   # Prometheus exporter metrics.
+
     networks: [obs-network]
     volumes:
       - ./open-telemetry-collector/config.yml:/etc/config.yml
+    logging: *default-logging
 
 networks:
   obs-network:

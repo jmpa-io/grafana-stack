@@ -18,6 +18,7 @@ scrape_configs:
   - job_name: open-telemetry-collector
     static_configs:
       - targets:
-        - open-telemetry-collector:8004
         - open-telemetry-collector:8888
-
+        - open-telemetry-collector:8889
+        - host.docker.internal:8888
+        - host.docker.internal:8889

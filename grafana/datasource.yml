@@ -40,7 +40,7 @@ datasources:
   basicAuth: false
   isDefault: false
   version: 1
-  editable: true
+  editable: false
   jsonData:
     derivedFields:
     - datasourceName: Tempo
