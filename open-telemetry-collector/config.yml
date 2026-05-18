@@ -1,14 +1,14 @@
 ---
 
 receivers:
- 
+
   # https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver/otlpreceiver
   otlp:
     protocols:
       grpc:
-        endpoint: 127.0.0.1:4319
-        # tls:
-        #   insecure: true
+        endpoint: 0.0.0.0:4319
+      http:
+        endpoint: 0.0.0.0:4320
 
   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/prometheusreceiver
   prometheus/internal:
@@ -17,7 +17,7 @@ receivers:
         - job_name: open-telemetry-collector
           scrape_interval: 30s
           static_configs:
-            - targets: ['127.0.0.1:8888']
+            - targets: ['0.0.0.0:8888']
 
 processors:
 
@@ -30,7 +30,7 @@ exporters:
 
   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/prometheusexporter
   prometheus:
-    endpoint: 127.0.0.1:8889
+    endpoint: 0.0.0.0:8889
 
   # https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/otlpexporter
   otlp:
@@ -38,8 +38,12 @@ exporters:
     tls:
       insecure: true
 
+  # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/lokiexporter
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+
 extensions:
- 
+
   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/healthcheckextension
   health_check:
 
@@ -52,6 +56,16 @@ extensions:
 
 service:
   extensions: [health_check, pprof, zpages]
+  telemetry:
+    traces:
+      level: basic
+      propagators: [tracecontext, b3]
+      processors:
+        - batch:
+            exporter:
+              otlp:
+                protocol: grpc/protobuf
+                endpoint: http://tempo:4317
   pipelines:
     metrics:
       receivers: [prometheus/internal]
@@ -61,5 +75,7 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [otlp]
-
-
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [loki]
