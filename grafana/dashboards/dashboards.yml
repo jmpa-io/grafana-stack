@@ -1,0 +1,47 @@
+apiVersion: 1
+
+# Dashboard provisioner for the grafana-stack.
+# Each subfolder maps to a Grafana folder.
+# Official dashboards are downloaded by grafana/dashboards/download.sh.
+# Custom/deployment-specific dashboards can be added alongside.
+
+providers:
+  - name: infrastructure
+    orgId: 1
+    folder: Infrastructure
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/infrastructure
+
+  - name: kubernetes
+    orgId: 1
+    folder: Kubernetes
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/kubernetes
+
+  - name: media
+    orgId: 1
+    folder: Media
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/media
+
+  - name: observability
+    orgId: 1
+    folder: Observability
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/observability
