@@ -56,16 +56,6 @@ extensions:
 
 service:
   extensions: [health_check, pprof, zpages]
-  telemetry:
-    traces:
-      level: basic
-      propagators: [tracecontext, b3]
-      processors:
-        - batch:
-            exporter:
-              otlp:
-                protocol: grpc/protobuf
-                endpoint: http://tempo:4317
   pipelines:
     metrics:
       receivers: [prometheus/internal]
