@@ -9,6 +9,14 @@ receivers:
         endpoint: 0.0.0.0:4319
       http:
         endpoint: 0.0.0.0:4320
+        # CORS required for browser-based (frontend) OTEL SDKs
+        cors:
+          allowed_origins:
+            - "http://localhost:5174"
+            - "http://localhost:5173"
+            - "http://*"
+          allowed_headers:
+            - "*"
 
   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/prometheusreceiver
   prometheus/internal:
