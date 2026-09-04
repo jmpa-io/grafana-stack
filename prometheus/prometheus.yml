@@ -21,8 +21,13 @@ scrape_configs:
         - open-telemetry-collector:8889
 
   # ── Harrier backend ─────────────────────────────────────────────────────────
-  # OTEL metrics from harrier-backend arrive via the collector's prometheus
-  # exporter on open-telemetry-collector:8889 (job above), labelled with
-  # service_name=harrier-backend. No separate scrape needed here.
-  # This entry is intentionally left as a comment for documentation.
+  # Scrapes the Micrometer /actuator/prometheus endpoint directly.
+  # harrier-backend must be running on the grafana-stack_default Docker network
+  # for this job to succeed. Prometheus will log scrape errors when it is not.
+  # To disable: comment out this job or remove this block.
+  - job_name: harrier-backend
+    metrics_path: /api/v1/actuator/prometheus
+    static_configs:
+      - targets:
+          - harrier-backend:3002
 
