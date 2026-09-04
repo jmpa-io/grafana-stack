@@ -23,6 +23,12 @@ install-loki-plugin:
 
 PHONY += install-loki-plugin
 
+download-dashboards: ## Downloads official Grafana community dashboards to grafana/dashboards/.
+download-dashboards:
+	bash grafana/dashboards/download.sh grafana/dashboards
+
+PHONY += download-dashboards
+
 ---: ## ---
 
 run: ## ** Runs ALL docker-compose services locally (installs Loki plugin if needed).

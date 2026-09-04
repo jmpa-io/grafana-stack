@@ -7,7 +7,7 @@
 # Dashboards are downloaded from grafana.com/api/dashboards/{id}/revisions/latest/download
 # and saved as JSON files in the destination directory under subfolders.
 
-set -uo pipefail
+set -euo pipefail
 
 DEST="${1:-/etc/grafana/provisioning/dashboards}"
 
