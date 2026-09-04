@@ -38,19 +38,19 @@ datasources:
   editable: false
   apiVersion: 1
   jsonData:
-  nodeGraph:
+    nodeGraph:
       enabled: true
-      search:
-        hide: false
-      lokiSearch:
-        datasourceUid: loki
-      tracesToLogs:
-        datasourceUid: loki
-        filterBySpanID: false
-        filterByTraceID: true
-        mapTagNamesEnabled: false
-        tags:
-          - compose_service
+    search:
+      hide: false
+    lokiSearch:
+      datasourceUid: loki
+    tracesToLogs:
+      datasourceUid: loki
+      filterBySpanID: false
+      filterByTraceID: true
+      mapTagNamesEnabled: false
+      tags:
+        - compose_service
 
 - name: Loki
   type: loki

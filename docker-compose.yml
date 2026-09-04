@@ -19,14 +19,14 @@ x-logging: &default-logging
 services:
 
   loki:
-    image: grafana/loki
+    image: grafana/loki:3.4.3
     container_name: loki
     command: -config.file=/etc/loki/local-config.yaml
     ports:
       - 3100:3100
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:v3.4.1
     container_name: prometheus
     command:
       - --config.file=/etc/prometheus.yml
@@ -58,7 +58,7 @@ services:
       - prometheus
 
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:11.6.1
     container_name: grafana
     ports:
       - 3000:3000
@@ -70,6 +70,8 @@ services:
       - GF_USERS_DEFAULT_THEME=dark
     volumes:
       - ./grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./grafana/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
     logging: *default-logging
     depends_on:
       - loki
