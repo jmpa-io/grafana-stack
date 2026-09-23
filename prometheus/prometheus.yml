@@ -26,7 +26,7 @@ scrape_configs:
   # for this job to succeed. Prometheus will log scrape errors when it is not.
   # To disable: comment out this job or remove this block.
   - job_name: harrier-backend
-    metrics_path: /api/v1/actuator/prometheus
+    metrics_path: /api/v1/harrier-svc/actuator/prometheus
     static_configs:
       - targets:
           - harrier-backend:3002
