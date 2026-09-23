@@ -28,12 +28,26 @@ receivers:
           static_configs:
             - targets: ['0.0.0.0:8888']
 
+  prometheus/nginx:
+    config:
+      scrape_configs:
+        - job_name: nginx
+          scrape_interval: 15s
+          static_configs:
+            - targets: ['harrier-frontend-local:9113']
+
 processors:
 
   # https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor
   batch:
     send_batch_size: 1000
     timeout: 1s
+
+  filter/drop-otel-self-traces:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["server.address"] == "open-telemetry-collector"'
 
 exporters:
 
@@ -67,12 +81,12 @@ service:
   extensions: [health_check, pprof, zpages]
   pipelines:
     metrics:
-      receivers: [otlp, prometheus/internal]
+      receivers: [otlp, prometheus/internal, prometheus/nginx]
       processors: [batch]
       exporters: [prometheus]
     traces:
       receivers: [otlp]
-      processors: [batch]
+      processors: [filter/drop-otel-self-traces, batch]
       exporters: [otlp]
     logs:
       receivers: [otlp]
