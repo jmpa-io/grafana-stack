@@ -1,14 +1,23 @@
 ---
 
 receivers:
- 
+
   # https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver/otlpreceiver
   otlp:
     protocols:
       grpc:
-        endpoint: 127.0.0.1:4319
-        # tls:
-        #   insecure: true
+        endpoint: 0.0.0.0:4319
+      http:
+        endpoint: 0.0.0.0:4320
+        # CORS required for browser-based (frontend) OTEL SDKs
+        cors:
+          allowed_origins:
+            - "http://localhost:5174"
+            - "http://localhost:5173"
+            # Wildcard — permits all HTTP origins. Intentional for local dev only.
+            - "http://*"
+          allowed_headers:
+            - "*"
 
   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/prometheusreceiver
   prometheus/internal:
@@ -17,7 +26,7 @@ receivers:
         - job_name: open-telemetry-collector
           scrape_interval: 30s
           static_configs:
-            - targets: ['127.0.0.1:8888']
+            - targets: ['0.0.0.0:8888']
 
 processors:
 
@@ -30,7 +39,7 @@ exporters:
 
   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/prometheusexporter
   prometheus:
-    endpoint: 127.0.0.1:8889
+    endpoint: 0.0.0.0:8889
 
   # https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/otlpexporter
   otlp:
@@ -38,8 +47,12 @@ exporters:
     tls:
       insecure: true
 
+  # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/lokiexporter
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+
 extensions:
- 
+
   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/healthcheckextension
   health_check:
 
@@ -54,12 +67,14 @@ service:
   extensions: [health_check, pprof, zpages]
   pipelines:
     metrics:
-      receivers: [prometheus/internal]
+      receivers: [otlp, prometheus/internal]
       processors: [batch]
       exporters: [prometheus]
     traces:
       receivers: [otlp]
       processors: [batch]
       exporters: [otlp]
-
-
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [loki]
