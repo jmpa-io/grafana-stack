@@ -1,5 +1,6 @@
 ---
 stream_over_http_enabled: true
+
 server:
   http_listen_port: 3200
   log_level: info
@@ -9,7 +10,9 @@ distributor:
     otlp:
       protocols:
         grpc:
-          endpoint: tempo:4317
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
 
 ingester:
   trace_idle_period: 10s
@@ -23,9 +26,7 @@ compactor:
 
 metrics_generator:
   registry:
-    external_labels:
-      source: tempo
-      cluster: docker-compose
+    external_labels: {source: tempo, cluster: docker-compose}
   storage:
     path: /tmp/tempo/generator/wal
     remote_write:
@@ -46,4 +47,3 @@ overrides:
   defaults:
     metrics_generator:
       processors: [service-graphs, span-metrics, local-blocks]
-      generate_native_histograms: both 
