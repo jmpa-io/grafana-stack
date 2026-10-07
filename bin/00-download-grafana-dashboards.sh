@@ -1,35 +1,34 @@
 #!/usr/bin/env bash
-# download.sh — downloads official Grafana community dashboards.
-# Run once at deploy time. Falls back gracefully if offline.
-#
-# Usage: bash grafana/dashboards/download.sh <dest_dir>
-#
-# Dashboards are downloaded from grafana.com/api/dashboards/{id}/revisions/latest/download
-# and saved as JSON files in the destination directory under subfolders.
-
+# Downloads official Grafana community dashboards into grafana/dashboards/<folder>/.
+# Falls back gracefully if offline.
 set -euo pipefail
 
-DEST="${1:-/etc/grafana/provisioning/dashboards}"
+die() { echo "$1" >&2; exit "${2:-1}"; }
 
-log() { echo "[grafana-stack/dashboards] $1"; }
+# check deps.
+deps=(curl)
+missing=()
+for dep in "${deps[@]}"; do
+  hash "$dep" 2>/dev/null || missing+=("$dep")
+done
+[[ ${#missing[@]} -ne 0 ]] && die "missing deps: ${missing[*]}"
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DEST="${1:-$REPO_ROOT/grafana/dashboards}"
 
 download() {
-  local id="$1"
-  local folder="$2"
-  local name="$3"
+  local id="$1" folder="$2" name="$3"
   local dest="${DEST}/${folder}"
-  mkdir -p "${dest}"
+  mkdir -p "$dest"
   if curl -sf --connect-timeout 5 --max-time 30 \
     "https://grafana.com/api/dashboards/${id}/revisions/latest/download" \
     -o "${dest}/${name}.json" 2>/dev/null; then
-    log "  OK  ${folder}/${name} (ID: ${id})"
+    echo "[OK]   ${folder}/${name} (ID: ${id})"
   else
-    log "  SKIP ${folder}/${name} (ID: ${id}) — offline or unavailable"
+    echo "[SKIP] ${folder}/${name} (ID: ${id}) — offline or unavailable"
     rm -f "${dest}/${name}.json"
   fi
 }
-
-log "Downloading official Grafana community dashboards..."
 
 # ── Infrastructure ────────────────────────────────────────────────────────────
 download 1860 "infrastructure" "node-exporter-full"
@@ -48,4 +47,4 @@ download 15983 "observability" "otel-collector"
 # ── Media ─────────────────────────────────────────────────────────────────────
 download 12103 "media" "arr-suite"
 
-log "Done."
+echo "Done."
