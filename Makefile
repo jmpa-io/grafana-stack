@@ -7,14 +7,12 @@ endif
 # Override the default dependency list — this is a Docker Compose project, not Go.
 DEPENDENCIES := docker
 
-LOKI_PLUGIN_IMAGE  := grafana/loki-docker-driver:3.0.0
-
 # Targets.
-
 download-dashboards: # Downloads official Grafana community dashboards to grafana/dashboards/.
 download-dashboards:
 	bash bin/00-download-grafana-dashboards.sh grafana/dashboards
 
+LOKI_PLUGIN_IMAGE ?= grafana/loki-docker-driver:3.0.0
 install-loki-plugin: # Installs the Loki Docker logging plugin if not already present.
 install-loki-plugin:
 	@docker plugin inspect loki >/dev/null 2>&1 || \
