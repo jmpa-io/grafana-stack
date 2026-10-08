@@ -14,24 +14,10 @@ done
 [[ ${#missing[@]} -ne 0 ]] && die "missing deps: ${missing[*]}"
 
 # must be run from the repo root.
-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not inside a git repo"
-[[ "$PWD" == "$REPO_ROOT" ]] || die "must be run from repo root ($REPO_ROOT)"
+repoRoot="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not inside a git repo"
+[[ "$PWD" == "$repoRoot" ]] || die "must be run from repo root ($repoRoot)"
 
-DEST="${1:-$REPO_ROOT/grafana/dashboards}"
-
-download() {
-  local id="$1" folder="$2" name="$3"
-  local dest="${DEST}/${folder}"
-  mkdir -p "$dest"
-  if curl -sf --connect-timeout 5 --max-time 30 \
-    "https://grafana.com/api/dashboards/${id}/revisions/latest/download" \
-    -o "${dest}/${name}.json" 2>/dev/null; then
-    echo "[OK]   ${folder}/${name} (ID: ${id})"
-  else
-    echo "[SKIP] ${folder}/${name} (ID: ${id}) — offline or unavailable"
-    rm -f "${dest}/${name}.json"
-  fi
-}
+destRoot="${1:-$repoRoot/grafana/dashboards}"
 
 # id folder name
 dashboards=(
@@ -48,7 +34,16 @@ dashboards=(
 
 for entry in "${dashboards[@]}"; do
   read -r id folder name <<< "$entry"
-  download "$id" "$folder" "$name"
+  dest=$destRoot/$folder
+  mkdir -p "$dest"
+  if curl -sf --connect-timeout 5 --max-time 30 \
+    "https://grafana.com/api/dashboards/$id/revisions/latest/download" \
+    -o "$dest/$name.json" 2>/dev/null; then
+    echo "[OK]   $folder/$name (ID: $id)"
+  else
+    echo "[SKIP] $folder/$name (ID: $id) — offline or unavailable"
+    rm -f "$dest/$name.json"
+  fi
 done
 
 echo "Done."
