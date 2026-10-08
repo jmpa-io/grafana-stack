@@ -6,14 +6,17 @@ set -euo pipefail
 die() { echo "$1" >&2; exit "${2:-1}"; }
 
 # check deps.
-deps=(curl)
+deps=(curl git)
 missing=()
 for dep in "${deps[@]}"; do
   hash "$dep" 2>/dev/null || missing+=("$dep")
 done
 [[ ${#missing[@]} -ne 0 ]] && die "missing deps: ${missing[*]}"
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# must be run from the repo root.
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not inside a git repo"
+[[ "$PWD" == "$REPO_ROOT" ]] || die "must be run from repo root ($REPO_ROOT)"
+
 DEST="${1:-$REPO_ROOT/grafana/dashboards}"
 
 download() {
@@ -30,21 +33,22 @@ download() {
   fi
 }
 
-# ── Infrastructure ────────────────────────────────────────────────────────────
-download 1860 "infrastructure" "node-exporter-full"
+# id folder name
+dashboards=(
+  "1860 infrastructure node-exporter-full"
+  "15661 kubernetes k8s-cluster"
+  "13332 kubernetes k8s-pods"
+  "19268 kubernetes argocd"
+  "3662 observability prometheus"
+  "13407 observability loki"
+  "17573 observability tempo"
+  "15983 observability otel-collector"
+  "12103 media arr-suite"
+)
 
-# ── Kubernetes ────────────────────────────────────────────────────────────────
-download 15661 "kubernetes" "k8s-cluster"
-download 13332 "kubernetes" "k8s-pods"
-download 19268 "kubernetes" "argocd"
-
-# ── Observability stack internals ─────────────────────────────────────────────
-download 3662 "observability" "prometheus"
-download 13407 "observability" "loki"
-download 17573 "observability" "tempo"
-download 15983 "observability" "otel-collector"
-
-# ── Media ─────────────────────────────────────────────────────────────────────
-download 12103 "media" "arr-suite"
+for entry in "${dashboards[@]}"; do
+  read -r id folder name <<< "$entry"
+  download "$id" "$folder" "$name"
+done
 
 echo "Done."
