@@ -4,8 +4,23 @@ name: ci
 on:
   push:
     branches: ["**"]
+    paths:
+      - '.github/workflows/ci.yml'
+      - 'docker-compose*.yml'
+      - '**Dockerfile'
+      - '**/*.sh'
+      - 'Makefile*'
   pull_request:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
+  repository_dispatch:
+    types: [update-cicd]
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
 
 jobs:
   lint:
@@ -17,7 +32,14 @@ jobs:
         run: docker compose config --quiet
 
       - name: Lint shell scripts
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@2.0.0
         with:
           scandir: "."
           severity: warning
+
+  post-to-slack:
+    needs: [lint]
+    if: always()
+    uses: jmpa-io/pipelines/.github/workflows/99-post-to-slack.yml@main
+    secrets:
+      WEBHOOK: ${{ secrets.SLACK_GITHUB_NOTIFICATIONS_WEBHOOK }}
