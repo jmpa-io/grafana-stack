@@ -2,7 +2,7 @@ apiVersion: 1
 
 # Dashboard provisioner for the grafana-stack.
 # Each subfolder maps to a Grafana folder.
-# Official dashboards are downloaded by grafana/dashboards/download.sh.
+# Official dashboards are downloaded by bin/00-download-grafana-dashboards.sh.
 # Custom/deployment-specific dashboards can be added alongside.
 
 providers:
