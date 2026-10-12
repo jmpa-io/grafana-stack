@@ -54,6 +54,27 @@ PHONY += status
 
 ---: ## ---
 
+# OTel pipeline verification (against a real downstream consumer — see bin/lib/otel-verify-common.sh)
+
+verify-otel-trace: ## Prove one trace actually ties a consumer's frontend+backend together in Tempo/Loki/Prometheus.
+verify-otel-trace:
+	bin/01-verify-otel-trace-link.sh
+
+verify-otel-logs: ## Prove a consumer's backend logs are landing in Loki with trace/log correlation fields.
+verify-otel-logs:
+	bin/02-verify-otel-logs.sh
+
+verify-otel-metrics: ## Prove a consumer's frontend and backend are both pushing metrics via OTLP into Prometheus.
+verify-otel-metrics:
+	bin/03-verify-otel-metrics.sh
+
+verify-otel: ## Run all three OTel pipeline checks against a real consumer: traces, logs, metrics.
+verify-otel: verify-otel-trace verify-otel-logs verify-otel-metrics
+
+PHONY += verify-otel-trace verify-otel-logs verify-otel-metrics verify-otel
+
+---: ## ---
+
 # Includes the common Makefile.
 # NOTE: this recursively goes back and finds the `.git` directory and assumes
 # this is the root of the project. This could have issues when this assumtion
