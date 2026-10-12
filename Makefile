@@ -7,29 +7,18 @@ endif
 # Override the default dependency list — this is a Docker Compose project, not Go.
 DEPENDENCIES := docker
 
-LOKI_PLUGIN_ALIAS  := loki
-LOKI_PLUGIN_IMAGE  := grafana/loki-docker-driver:3.0.0
+LOKI_PLUGIN_ALIAS ?= loki
+LOKI_PLUGIN_IMAGE ?= grafana/loki-docker-driver:3.0.0
 
 # Targets.
-
-install-loki-plugin: ## Installs the Loki Docker logging plugin (required once per machine).
-install-loki-plugin:
-	@if ! docker plugin ls | grep -q "$(LOKI_PLUGIN_ALIAS)"; then \
-		echo "Installing Loki Docker logging plugin..."; \
-		docker plugin install $(LOKI_PLUGIN_IMAGE) --alias $(LOKI_PLUGIN_ALIAS) --grant-all-permissions; \
-	else \
-		echo "Loki Docker logging plugin already installed."; \
-	fi
-
-PHONY += install-loki-plugin
-
 download-dashboards: ## Downloads official Grafana community dashboards to grafana/dashboards/.
 download-dashboards:
-	bash grafana/dashboards/download.sh grafana/dashboards
+	bash bin/00-download-grafana-dashboards.sh grafana/dashboards
 
-PHONY += download-dashboards
-
----: ## ---
+install-loki-plugin: ## Installs the Loki Docker logging plugin if not already present.
+install-loki-plugin:
+	@docker plugin inspect $(LOKI_PLUGIN_ALIAS) >/dev/null 2>&1 || \
+		docker plugin install $(LOKI_PLUGIN_IMAGE) --alias $(LOKI_PLUGIN_ALIAS) --grant-all-permissions
 
 run: ## ** Runs ALL docker-compose services locally (installs Loki plugin if needed).
 run: install-loki-plugin
@@ -38,7 +27,7 @@ run: install-loki-plugin
 		--force-recreate \
 		--remove-orphans
 
-PHONY += run
+PHONY += download-dashboards install-loki-plugin run
 
 stop: ## Stops and removes ALL docker-compose services.
 stop:
@@ -70,4 +59,3 @@ PHONY += status
 # this is the root of the project. This could have issues when this assumtion
 # is incorrect.
 include $(shell while [[ ! -d .git ]]; do cd ..; done; pwd)/Makefile.common.mk
-
