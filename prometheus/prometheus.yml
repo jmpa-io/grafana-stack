@@ -26,7 +26,7 @@ scrape_configs:
   # for this job to succeed. Prometheus will log scrape errors when it is not.
   # To disable: comment out this job or remove this block.
   - job_name: app-backend
-    metrics_path: /api/v1/actuator/prometheus
+    metrics_path: /api/v1/app-svc/actuator/prometheus
     static_configs:
       - targets:
           - app-backend:3002
