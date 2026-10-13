@@ -68,3 +68,28 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4320
 All three signals (traces, metrics, logs) are accepted and forwarded to the appropriate backend.
 
 Container logs from all services in the stack are automatically shipped to Loki via the Docker logging driver.
+
+## Watching OTel data live
+
+```bash
+make watch-otel
+```
+
+Continuously refreshing, color-coded terminal view of what's actually landing in Tempo/Loki/Prometheus right now, grouped per service. Observational only — it doesn't pass/fail anything.
+
+```bash
+# override which services to watch (default: harrier-web harrier-svc nginx) and refresh interval
+SERVICES="harrier-svc nginx" INTERVAL=3 make watch-otel
+```
+
+## Verifying OTel data (pass/fail)
+
+Generic checks against whatever is actually sending data into this stack right now. The caller supplies trace id / service names — these scripts know nothing about any specific consumer:
+
+```bash
+TRACE_ID=... PARENT_SERVICE=... CHILD_SERVICE=... make verify-otel-trace  # one trace ties two services together (Tempo + Loki + Prometheus exemplar)
+SERVICE=... make verify-otel-logs                                         # SERVICE's logs are landing in Loki with trace correlation
+SERVICES="svc-a svc-b" make verify-otel-metrics                           # every service in SERVICES is pushing metrics
+```
+
+See `.claude/skills/otel-pipeline-verify/SKILL.md` for the full reference, and `watch-otel`/`verify-otel-*` targets in the `Makefile` for exact invocation. A consumer repo owns generating real traffic and calling these with its own values — see `harrier`'s `scripts/verify-otel.sh` for a worked example.
