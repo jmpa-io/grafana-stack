@@ -1,19 +1,17 @@
-# Shared by bin/*-verify-otel-*.sh — prereq checks, backend OTel javaagent
-# toggle/restore, and a retry-with-delay helper. Not standalone; sourced,
-# not executed.
+# Shared by bin/*-verify-otel-*.sh — stack reachability checks and a
+# retry-with-delay helper. Not standalone; sourced, not executed.
 #
-# These scripts verify that a real downstream consumer (currently harrier +
-# harrier-backend) is actually landing traces/logs/metrics in this stack —
-# not just that the stack itself is configured. Override the HARRIER_*/
-# FRONTEND_URL/*_URL vars below to point at a different consumer.
+# These scripts verify that THIS stack is actually receiving and correlating
+# telemetry — trace linkage, log correlation, metrics push — from whatever
+# consumer calls them. They take no consumer-specific knowledge (no service
+# names, no container names, no app URLs): every signal a check needs about
+# the consumer under test (trace id, service names) is passed in via env var
+# by the caller. Generating real traffic and knowing which containers to
+# toggle is the consumer's job — see e.g. harrier's scripts/verify-otel.sh.
 
 TEMPO_URL="${TEMPO_URL:-http://localhost:3200}"
 LOKI_URL="${LOKI_URL:-http://localhost:3100}"
 PROM_URL="${PROM_URL:-http://localhost:9090}"
-FRONTEND_URL="${FRONTEND_URL:-http://localhost:5174}"
-HARRIER_BACKEND_DIR="${HARRIER_BACKEND_DIR:-$HOME/go/src/github.com/CBA-General/harrier-backend}"
-FRONTEND_CONTAINER="${FRONTEND_CONTAINER:-harrier-frontend-otel}"
-BACKEND_CONTAINER="${BACKEND_CONTAINER:-harrier-backend-app-1}"
 
 die() { echo "$1" >&2; exit "${2:-1}"; }
 
@@ -23,7 +21,17 @@ require_repo_root() {
   [ "$PWD" = "$repo_root" ] || die "must be run from repo root ($repo_root)"
 }
 
-fail() { echo "FAIL: $*" >&2; exit 1; }
+# Dumps a timestamped snapshot of relevant container state on every failure,
+# so a one-off teardown (containers actually gone) leaves a trail distinct
+# from a transient check failure, instead of only the final error message.
+fail() {
+  echo "FAIL: $*" >&2
+  echo "---- docker state at $(date -u +%FT%TZ) ----" >&2
+  docker ps -a --format '{{.Names}}\t{{.Status}}' 2>&1 \
+    | grep -E 'tempo|loki|prometheus|open-telemetry|grafana' >&2 || true
+  echo "----" >&2
+  exit 1
+}
 
 poll() {
   local tries="$1" delay="$2"; shift 2
@@ -37,8 +45,6 @@ poll() {
 }
 
 check_otel_prereqs() {
-  docker inspect "$FRONTEND_CONTAINER" >/dev/null 2>&1 || fail "$FRONTEND_CONTAINER is not running (see harrier's make docker-up-otel)"
-  docker inspect "$BACKEND_CONTAINER" >/dev/null 2>&1 || fail "$BACKEND_CONTAINER is not running"
   poll 5 3 curl -sf "$TEMPO_URL/ready" || fail "Tempo unreachable at $TEMPO_URL after 15s — is this stack up (make run)?"
   # Loki's ingester reports 503 "waiting for 15s after being ready" for a bit
   # after startup — a real, known Loki behavior, not a sign anything is broken.
@@ -46,23 +52,7 @@ check_otel_prereqs() {
   poll 5 3 curl -sf "$PROM_URL/-/healthy" || fail "Prometheus unreachable at $PROM_URL after 15s"
 }
 
-# Sets WAS_ENABLED so restore_backend_otel can put things back as found.
-ensure_backend_otel_enabled() {
-  WAS_ENABLED=false
-  if docker exec "$BACKEND_CONTAINER" sh -c "ps aux | grep -q '[-]javaagent'"; then
-    WAS_ENABLED=true
-  fi
-  if [ "$WAS_ENABLED" = "false" ]; then
-    echo "backend OTel is currently off — enabling temporarily for this test"
-    (cd "$HARRIER_BACKEND_DIR" && OTEL_ENABLED=true docker compose --profile local up -d --no-deps app) >/dev/null
-    echo "waiting for backend to restart with the javaagent attached..."
-    sleep 15
-  fi
-}
-
-restore_backend_otel() {
-  if [ "${WAS_ENABLED:-true}" = "false" ]; then
-    echo "== restoring backend to OTEL_ENABLED=false =="
-    (cd "$HARRIER_BACKEND_DIR" && OTEL_ENABLED=false docker compose --profile local up -d --no-deps app) >/dev/null
-  fi
+require_env() {
+  local name="$1"
+  [ -n "${!name:-}" ] || die "$name is required (set it in the environment, e.g. via 'make $2 $name=...')"
 }
