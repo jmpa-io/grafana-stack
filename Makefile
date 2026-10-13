@@ -54,24 +54,29 @@ PHONY += status
 
 ---: ## ---
 
-# OTel pipeline verification (against a real downstream consumer — see bin/lib/otel-verify-common.sh)
+# OTel pipeline verification — generic checks against THIS stack's Tempo/
+# Loki/Prometheus. These scripts know nothing about any specific consumer;
+# the caller supplies trace id and service names (see bin/lib/otel-verify-common.sh).
+# A consumer repo (e.g. harrier) owns generating real traffic and calling
+# these with its own values — see harrier's scripts/verify-otel.sh.
 
-verify-otel-trace: ## Prove one trace actually ties a consumer's frontend+backend together in Tempo/Loki/Prometheus.
+verify-otel-trace: ## Prove one trace ties PARENT_SERVICE and CHILD_SERVICE together in Tempo/Loki/Prometheus. Required: TRACE_ID, PARENT_SERVICE, CHILD_SERVICE.
 verify-otel-trace:
-	bin/01-verify-otel-trace-link.sh
+	TRACE_ID=$(TRACE_ID) PARENT_SERVICE=$(PARENT_SERVICE) CHILD_SERVICE=$(CHILD_SERVICE) bin/01-verify-otel-trace-link.sh
 
-verify-otel-logs: ## Prove a consumer's backend logs are landing in Loki with trace/log correlation fields.
+verify-otel-logs: ## Prove SERVICE's logs are landing in Loki with trace/log correlation fields. Required: SERVICE.
 verify-otel-logs:
-	bin/02-verify-otel-logs.sh
+	SERVICE=$(SERVICE) bin/02-verify-otel-logs.sh
 
-verify-otel-metrics: ## Prove a consumer's frontend and backend are both pushing metrics via OTLP into Prometheus.
+verify-otel-metrics: ## Prove every service in SERVICES is pushing metrics via OTLP into Prometheus. Required: SERVICES (space-separated).
 verify-otel-metrics:
-	bin/03-verify-otel-metrics.sh
+	SERVICES="$(SERVICES)" bin/03-verify-otel-metrics.sh
 
-verify-otel: ## Run all three OTel pipeline checks against a real consumer: traces, logs, metrics.
-verify-otel: verify-otel-trace verify-otel-logs verify-otel-metrics
+watch-otel: ## Live, color-coded terminal view of traces/logs/metrics landing per service, refreshing every INTERVAL seconds. Optional: SERVICES (space-separated, default: harrier-web harrier-svc nginx), INTERVAL (default: 5).
+watch-otel:
+	bin/watch-otel.sh
 
-PHONY += verify-otel-trace verify-otel-logs verify-otel-metrics verify-otel
+PHONY += verify-otel-trace verify-otel-logs verify-otel-metrics watch-otel
 
 ---: ## ---
 
