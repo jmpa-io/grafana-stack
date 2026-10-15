@@ -41,5 +41,7 @@ jobs:
     needs: [lint]
     if: always()
     uses: jmpa-io/pipelines/.github/workflows/99-post-to-slack.yml@main
+    with:
+      needs: ${{ toJSON(needs) }}
     secrets:
       WEBHOOK: ${{ secrets.SLACK_GITHUB_NOTIFICATIONS_WEBHOOK }}
