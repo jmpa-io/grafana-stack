@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shared by bin/*-verify-otel-*.sh — stack reachability checks and a
 # retry-with-delay helper. Not standalone; sourced, not executed.
 #
