@@ -32,7 +32,7 @@ services:
       - loki-data:/loki
 
   prometheus:
-    image: prom/prometheus:v3.4.1
+    image: prom/prometheus:v3.15.1
     container_name: prometheus
     command:
       - --config.file=/etc/prometheus.yml
