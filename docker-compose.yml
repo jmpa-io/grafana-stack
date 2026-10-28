@@ -52,7 +52,7 @@ services:
 
   # TODO: figure out why this version works, but latest doesn't.
   tempo:
-    image: grafana/tempo:2.4.1
+    image: grafana/tempo:3.1.1
     container_name: tempo
     command: [ "-config.file=/etc/config.yml" ]
     ports:
