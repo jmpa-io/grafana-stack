@@ -91,7 +91,7 @@ services:
 
   # TODO: figure out why every version after this one fails to expose the ':8888/metrics' endpoint.
   open-telemetry-collector:
-    image: otel/opentelemetry-collector-contrib:0.110.0
+    image: otel/opentelemetry-collector-contrib:0.163.2-386
     container_name: open-telemetry-collector
     command:
       - --config=file:/etc/config.yml
