@@ -1,0 +1,2 @@
+# Community dashboards fetched by `make download-dashboards` (grafana/dashboards/download.sh).
+/grafana/dashboards/*/

@@ -19,15 +19,3 @@ scrape_configs:
     static_configs:
       - targets:
         - open-telemetry-collector:8889
-
-  # ── App backend ─────────────────────────────────────────────────────────
-  # Scrapes the Micrometer /actuator/prometheus endpoint directly.
-  # app-backend must be running on the grafana-stack_default Docker network
-  # for this job to succeed. Prometheus will log scrape errors when it is not.
-  # To disable: comment out this job or remove this block.
-  - job_name: app-backend
-    metrics_path: /api/v1/app-svc/actuator/prometheus
-    static_configs:
-      - targets:
-          - app-backend:3002
-
