@@ -6,9 +6,8 @@ set -euo pipefail
 # just that raw lines show up.
 #
 # This script knows nothing about any specific consumer — the caller must
-# have already generated real traffic for SERVICE before invoking this. See
-# harrier's scripts/verify-otel.sh for a worked example of a consumer
-# driving this.
+# have already generated real traffic for SERVICE before invoking this. The
+# consumer's own verify script is expected to drive this.
 #
 # See 01-verify-otel-trace-link.sh for a check that a SPECIFIC trace id's
 # logs land; this one is about the pipeline landing logs at all, independent

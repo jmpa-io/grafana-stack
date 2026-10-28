@@ -89,8 +89,6 @@ A consumer repo (one whose app sends telemetry here) owns:
 - Generating real traffic — emitting a trace, hitting endpoints enough times for logs/metrics to show up.
 - Calling the three `make verify-otel-*` targets above with its own service names and trace id, then reporting pass/fail.
 
-See `harrier`'s `.claude/skills/otel-pipeline-check` skill and `scripts/verify-otel.sh` for a worked example of a consumer driving this stack end-to-end.
-
 ## Self-verification (don't just assert it works)
 
 Claude has no camera and cannot take screenshots. "I confirmed X" in prose is not proof — it's a claim. Every check here must be independently re-runnable by the user, not taken on faith:
