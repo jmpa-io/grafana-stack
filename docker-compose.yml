@@ -5,6 +5,10 @@
 # https://github.com/grafana/tempo/blob/main/example/docker-compose/otel-collector-multitenant/docker-compose.yaml.
 # https://github.com/blueswen/fastapi-observability/blob/main/docker-compose.yaml.
 
+# Ports are published on 127.0.0.1 only: Grafana has anonymous Admin and no login form, so it must never be
+# reachable from the network this machine is on. Data lives in named volumes (see the bottom of this file) and
+# survives `make stop`, `make restart` and `make run`; only `make reset` deletes it.
+
 x-logging: &default-logging
   driver: loki
   options:
@@ -23,7 +27,9 @@ services:
     container_name: loki
     command: -config.file=/etc/loki/local-config.yaml
     ports:
-      - 3100:3100
+      - 127.0.0.1:3100:3100
+    volumes:
+      - loki-data:/loki
 
   prometheus:
     image: prom/prometheus:v3.4.1
@@ -33,10 +39,13 @@ services:
       - --web.enable-remote-write-receiver
       - --enable-feature=exemplar-storage
       - --enable-feature=native-histograms
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
     ports:
-      - 9090:9090
+      - 127.0.0.1:9090:9090
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus.yml
+      - prometheus-data:/prometheus
     logging: *default-logging
     depends_on:
       - loki
@@ -47,11 +56,12 @@ services:
     container_name: tempo
     command: [ "-config.file=/etc/config.yml" ]
     ports:
-      - 3200:3200   # tempo http.
-      - 4317:4317   # otlp (grpc).
-      - 4318:4318   # otlp (http).
+      - 127.0.0.1:3200:3200   # tempo http.
+      - 127.0.0.1:4317:4317   # otlp (grpc).
+      - 127.0.0.1:4318:4318   # otlp (http).
     volumes:
       - ./tempo/config.yml:/etc/config.yml
+      - tempo-data:/var/tempo
     logging: *default-logging
     depends_on:
       - loki
@@ -61,7 +71,7 @@ services:
     image: grafana/grafana:11.6.1
     container_name: grafana
     ports:
-      - 3000:3000
+      - 127.0.0.1:3000:3000
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
@@ -72,6 +82,7 @@ services:
       - ./grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasources.yml
       - ./grafana/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - grafana-data:/var/lib/grafana
     logging: *default-logging
     depends_on:
       - loki
@@ -85,18 +96,25 @@ services:
     command:
       - --config=file:/etc/config.yml
     ports:
-      - 4319:4319   # otlp (grpc).
-      - 4320:4320   # otlp (http).
+      - 127.0.0.1:4319:4319   # otlp (grpc).
+      - 127.0.0.1:4320:4320   # otlp (http).
 
-      - 1888:1888   # pprof extension.
-      - 13133:13133 # health_check extension.
-      - 55679:55679 # zpages extension.
+      - 127.0.0.1:1888:1888   # pprof extension.
+      - 127.0.0.1:13133:13133 # health_check extension.
+      - 127.0.0.1:55679:55679 # zpages extension.
 
-      - 8888:8888   # Prometheus metrics exposed by collector.
-      - 8889:8889   # Prometheus exporter metrics.
+      - 127.0.0.1:8888:8888   # Prometheus metrics exposed by collector.
+      - 127.0.0.1:8889:8889   # Prometheus exporter metrics.
     volumes:
       - ./open-telemetry-collector/config.yml:/etc/config.yml
     logging: *default-logging
     depends_on:
       - loki
       - tempo
+
+# Same names and mount paths the homelab's observability stack uses when it merges its overrides over this file.
+volumes:
+  loki-data:
+  prometheus-data:
+  tempo-data:
+  grafana-data:

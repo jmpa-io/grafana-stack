@@ -8,7 +8,7 @@
 # names, no container names, no app URLs): every signal a check needs about
 # the consumer under test (trace id, service names) is passed in via env var
 # by the caller. Generating real traffic and knowing which containers to
-# toggle is the consumer's job — see e.g. harrier's scripts/verify-otel.sh.
+# toggle is the consumer's job.
 
 TEMPO_URL="${TEMPO_URL:-http://localhost:3200}"
 LOKI_URL="${LOKI_URL:-http://localhost:3100}"

@@ -7,8 +7,7 @@ set -euo pipefail
 #
 # This script knows nothing about any specific consumer — the caller must
 # have already generated real traffic for each service before invoking this.
-# See harrier's scripts/verify-otel.sh for a worked example of a consumer
-# driving this.
+# The consumer's own verify script is expected to drive this.
 #
 # See 01-verify-otel-trace-link.sh for a check that a SPECIFIC trace id has
 # a Prometheus exemplar; this one is about the pipeline landing metrics at
@@ -17,8 +16,8 @@ set -euo pipefail
 # Required env vars:
 #   SERVICES - space-separated list of exported_job values to check for
 #
-# Usage: SERVICES="harrier-svc nginx" make verify-otel-metrics
-#    or: SERVICES="harrier-svc nginx" bin/03-verify-otel-metrics.sh
+# Usage: SERVICES="svc-a svc-b" make verify-otel-metrics
+#    or: SERVICES="svc-a svc-b" bin/03-verify-otel-metrics.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 # shellcheck source=./lib/otel-verify-common.sh
