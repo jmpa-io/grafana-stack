@@ -28,14 +28,6 @@ receivers:
           static_configs:
             - targets: ['0.0.0.0:8888']
 
-  prometheus/nginx:
-    config:
-      scrape_configs:
-        - job_name: nginx
-          scrape_interval: 15s
-          static_configs:
-            - targets: ['harrier-frontend-local:9113']
-
 processors:
 
   # https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/batchprocessor
@@ -81,7 +73,7 @@ service:
   extensions: [health_check, pprof, zpages]
   pipelines:
     metrics:
-      receivers: [otlp, prometheus/internal, prometheus/nginx]
+      receivers: [otlp, prometheus/internal]
       processors: [batch]
       exporters: [prometheus]
     traces:

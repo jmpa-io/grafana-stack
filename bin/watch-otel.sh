@@ -8,19 +8,20 @@ set -uo pipefail
 # Knows nothing about any specific consumer; SERVICES is just a list of
 # service.name / exported_job values to watch.
 #
-# Required: none. Optional env vars:
-#   SERVICES - space-separated service names to watch (default below)
+# Required env vars:
+#   SERVICES - space-separated service names to watch
+# Optional env vars:
 #   INTERVAL - refresh interval in seconds (default: 5)
 #
-# Usage: make watch-otel
-#    or: SERVICES="harrier-svc nginx" INTERVAL=3 bin/watch-otel.sh
+# Usage: SERVICES="svc-a svc-b" make watch-otel
+#    or: SERVICES="svc-a svc-b" INTERVAL=3 bin/watch-otel.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 # shellcheck source=./lib/otel-verify-common.sh
 source "$SCRIPT_DIR/lib/otel-verify-common.sh"
 require_repo_root
 
-SERVICES="${SERVICES:-harrier-web harrier-svc nginx}"
+require_env SERVICES watch-otel
 INTERVAL="${INTERVAL:-5}"
 
 echo "== checking prerequisites =="

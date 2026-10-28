@@ -12,8 +12,7 @@ set -euo pipefail
 #
 # This script knows nothing about any specific consumer — the caller must
 # have already generated a real trace and pass its id and the two service
-# names in. See harrier's scripts/verify-otel.sh for a worked example of a
-# consumer driving this.
+# names in. The consumer's own verify script is expected to drive this.
 #
 # For broader (non-trace-specific) checks that logs/metrics are landing at
 # all, see 02-verify-otel-logs.sh and 03-verify-otel-metrics.sh.

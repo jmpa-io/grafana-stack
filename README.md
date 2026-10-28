@@ -29,8 +29,21 @@ This will:
 ## Stopping
 
 ```bash
-make stop
+make stop    # stops the containers; your data is kept
+make reset   # stops AND deletes all stored metrics, logs, traces and Grafana state
 ```
+
+## Your data persists
+
+Prometheus, Loki, Tempo and Grafana each use a named Docker volume (`prometheus-data`, `loki-data`, `tempo-data`, `grafana-data`). They survive `make stop`, `make restart` and `make run`. Only `make reset` (or `docker compose down --volumes`) deletes them. Prometheus keeps 30 days; Tempo keeps traces for 48 hours.
+
+## Dashboards
+
+```bash
+make download-dashboards   # one-off: fetches the community dashboards into grafana/dashboards/<folder>/
+```
+
+The downloaded JSON is git-ignored. Until you run it, Grafana starts with no dashboards.
 
 ## Other useful commands
 
@@ -42,7 +55,7 @@ make restart # stop + start
 
 ## Services
 
-Once running, the following are available:
+Once running, the following are available. Every port is published on `127.0.0.1` only, because Grafana has anonymous Admin and no login, so nothing is reachable from your network:
 
 | Service | URL | Purpose |
 |:---|:---|:---|
@@ -72,14 +85,14 @@ Container logs from all services in the stack are automatically shipped to Loki 
 ## Watching OTel data live
 
 ```bash
-make watch-otel
+SERVICES="svc-a svc-b" make watch-otel
 ```
 
 Continuously refreshing, color-coded terminal view of what's actually landing in Tempo/Loki/Prometheus right now, grouped per service. Observational only — it doesn't pass/fail anything.
 
 ```bash
-# override which services to watch (default: harrier-web harrier-svc nginx) and refresh interval
-SERVICES="harrier-svc nginx" INTERVAL=3 make watch-otel
+# SERVICES is required; INTERVAL (seconds) is optional and defaults to 5
+SERVICES="svc-a svc-b" INTERVAL=3 make watch-otel
 ```
 
 ## Verifying OTel data (pass/fail)
@@ -92,4 +105,4 @@ SERVICE=... make verify-otel-logs                                         # SERV
 SERVICES="svc-a svc-b" make verify-otel-metrics                           # every service in SERVICES is pushing metrics
 ```
 
-See `.claude/skills/otel-pipeline-verify/SKILL.md` for the full reference, and `watch-otel`/`verify-otel-*` targets in the `Makefile` for exact invocation. A consumer repo owns generating real traffic and calling these with its own values — see `harrier`'s `scripts/verify-otel.sh` for a worked example.
+See `.claude/skills/otel-pipeline-verify/SKILL.md` for the full reference, and `watch-otel`/`verify-otel-*` targets in the `Makefile` for exact invocation. A consumer repo owns generating real traffic and calling these with its own values.

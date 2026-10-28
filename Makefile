@@ -13,7 +13,7 @@ LOKI_PLUGIN_IMAGE ?= grafana/loki-docker-driver:3.0.0
 # Targets.
 download-dashboards: ## Downloads official Grafana community dashboards to grafana/dashboards/.
 download-dashboards:
-	bash bin/00-download-grafana-dashboards.sh grafana/dashboards
+	bash grafana/dashboards/download.sh grafana/dashboards
 
 install-loki-plugin: ## Installs the Loki Docker logging plugin if not already present.
 install-loki-plugin:
@@ -29,11 +29,17 @@ run: install-loki-plugin
 
 PHONY += download-dashboards install-loki-plugin run
 
-stop: ## Stops and removes ALL docker-compose services.
+stop: ## Stops and removes ALL docker-compose services (data volumes are kept).
 stop:
 	docker compose down
 
 PHONY += stop
+
+reset: ## DELETES all stored metrics, logs, traces and Grafana state (the named volumes).
+reset:
+	docker compose down --volumes
+
+PHONY += reset
 
 restart: ## Restarts ALL docker-compose services.
 restart: stop run
@@ -57,8 +63,8 @@ PHONY += status
 # OTel pipeline verification — generic checks against THIS stack's Tempo/
 # Loki/Prometheus. These scripts know nothing about any specific consumer;
 # the caller supplies trace id and service names (see bin/lib/otel-verify-common.sh).
-# A consumer repo (e.g. harrier) owns generating real traffic and calling
-# these with its own values — see harrier's scripts/verify-otel.sh.
+# A consumer repo owns generating real traffic and calling these with its
+# own values.
 
 verify-otel-trace: ## Prove one trace ties PARENT_SERVICE and CHILD_SERVICE together in Tempo/Loki/Prometheus. Required: TRACE_ID, PARENT_SERVICE, CHILD_SERVICE.
 verify-otel-trace:
@@ -72,9 +78,9 @@ verify-otel-metrics: ## Prove every service in SERVICES is pushing metrics via O
 verify-otel-metrics:
 	SERVICES="$(SERVICES)" bin/03-verify-otel-metrics.sh
 
-watch-otel: ## Live, color-coded terminal view of traces/logs/metrics landing per service, refreshing every INTERVAL seconds. Optional: SERVICES (space-separated, default: harrier-web harrier-svc nginx), INTERVAL (default: 5).
+watch-otel: ## Live, color-coded terminal view of traces/logs/metrics landing per service, refreshing every INTERVAL seconds. Required: SERVICES (space-separated). Optional: INTERVAL (default: 5).
 watch-otel:
-	bin/watch-otel.sh
+	SERVICES="$(SERVICES)" INTERVAL="$(INTERVAL)" bin/watch-otel.sh
 
 PHONY += verify-otel-trace verify-otel-logs verify-otel-metrics watch-otel
 
