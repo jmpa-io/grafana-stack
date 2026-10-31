@@ -61,6 +61,9 @@ extensions:
 
   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/healthcheckextension
   health_check:
+    # This collector version defaults to localhost:13133, which is unreachable through the published docker port
+    # (127.0.0.1:13133 on the host), so health probes got a connection reset.
+    endpoint: 0.0.0.0:13133
 
   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/pprofextension
   pprof:
