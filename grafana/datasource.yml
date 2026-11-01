@@ -44,13 +44,20 @@ datasources:
       hide: false
     lokiSearch:
       datasourceUid: loki
-    tracesToLogs:
+    # Trace -> logs: Loki streams are labelled service_name (by the collector's
+    # loki exporter), so map the span's service.name onto it. compose_service is
+    # kept for services that label their logs that way.
+    tracesToLogsV2:
       datasourceUid: loki
       filterBySpanID: false
       filterByTraceID: true
-      mapTagNamesEnabled: false
+      # Logs are written as the request finishes, a hair after the span ends.
+      spanStartTimeShift: -1m
+      spanEndTimeShift: 1m
       tags:
-        - compose_service
+        - key: service.name
+          value: service_name
+        - key: compose_service
 
 - name: Loki
   type: loki
@@ -67,8 +74,10 @@ datasources:
   editable: false
   jsonData:
     derivedFields:
+      # Matches "trace_id=<id>" text logs and the collector loki exporter's JSON
+      # ("traceid":"<id>").
       - datasourceUid: tempo
-        matcherRegex: (?:trace_id)=(\w+)
+        matcherRegex: (?:trace_id=|"traceid":")(\w+)
         name: TraceID
         url: $${__value.raw}
 
