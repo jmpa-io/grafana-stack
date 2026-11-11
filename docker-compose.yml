@@ -45,7 +45,23 @@ services:
       - 127.0.0.1:9090:9090
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus.yml
+      - ./prometheus/rules-sites.yml:/etc/prometheus/rules-sites.yml
       - prometheus-data:/prometheus
+    logging: *default-logging
+    depends_on:
+      - loki
+      - blackbox-exporter
+
+  # probes the public sites for uptime, latency and TLS expiry. scraped by the `blackbox-sites` job in prometheus.yml.
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.26.0
+    container_name: blackbox-exporter
+    command:
+      - --config.file=/etc/blackbox/config.yml
+    ports:
+      - 127.0.0.1:9115:9115
+    volumes:
+      - ./blackbox/config.yml:/etc/blackbox/config.yml:ro
     logging: *default-logging
     depends_on:
       - loki

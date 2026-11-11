@@ -1,0 +1,16 @@
+---
+# Probe modules for the blackbox exporter. Prometheus picks a module per scrape with the `module` URL parameter
+# (see the `blackbox-sites` job in prometheus/prometheus.yml).
+modules:
+
+  # a site is up when it answers 2xx over HTTPS (redirects followed) with a valid certificate.
+  https_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      method: GET
+      preferred_ip_protocol: ip4
+      ip_protocol_fallback: false
+      follow_redirects: true
+      fail_if_not_ssl: true
+      valid_status_codes: []   # empty means any 2xx.
