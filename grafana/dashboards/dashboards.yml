@@ -45,3 +45,14 @@ providers:
     allowUiUpdates: false
     options:
       path: /etc/grafana/provisioning/dashboards/observability
+
+  # hand-written dashboards that live in this repo (the folders above are downloaded and git-ignored).
+  - name: custom
+    orgId: 1
+    folder: Sites
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/custom

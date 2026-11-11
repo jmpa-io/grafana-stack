@@ -1,0 +1,31 @@
+---
+groups:
+  - name: sites
+    rules:
+
+      - alert: SiteDown
+        expr: probe_success{job="blackbox-sites"} == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance }} is down"
+          description: "The probe for {{ $labels.instance }} has failed for 3 minutes."
+
+      - alert: SiteSlow
+        expr: probe_duration_seconds{job="blackbox-sites"} > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }} is slow"
+          description: "{{ $labels.instance }} has taken more than 2s to answer for 10 minutes."
+
+      - alert: SiteCertificateExpiring
+        expr: (probe_ssl_earliest_cert_expiry{job="blackbox-sites"} - time()) / 86400 < 14
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }} certificate expires in under 14 days"
+          description: "The certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}."

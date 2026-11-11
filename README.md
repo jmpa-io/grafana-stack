@@ -45,6 +45,14 @@ make download-dashboards   # one-off: fetches the community dashboards into graf
 
 The downloaded JSON is git-ignored. Until you run it, Grafana starts with no dashboards.
 
+## Site monitoring
+
+A `blackbox-exporter` probes the public sites every 60s and Prometheus scrapes the results (job `blackbox-sites`). The **Sites** dashboard (Grafana folder "Sites", `grafana/dashboards/custom/sites.json`) shows up/down, response time, HTTP status, certificate days left and 24h uptime.
+
+To monitor another site, add its URL to `targets` in the `blackbox-sites` job in `prometheus/prometheus.yml`. Probe settings are in `blackbox/config.yml`.
+
+`prometheus/rules-sites.yml` defines three alerts: `SiteDown` (3m), `SiteSlow` (>2s for 10m) and `SiteCertificateExpiring` (<14 days). They show up under Alerts in the Prometheus UI. Nothing sends notifications yet, because the stack has no Alertmanager.
+
 ## Other useful commands
 
 ```bash
@@ -62,6 +70,7 @@ Once running, the following are available. Every port is published on `127.0.0.1
 | Grafana | http://localhost:3000 | Dashboards (anonymous admin, no login required) |
 | Prometheus | http://localhost:9090 | Metrics storage + scraping |
 | Loki | http://localhost:3100 | Log storage |
+| Blackbox exporter | http://localhost:9115 | Probes the public sites (uptime, latency, TLS expiry) |
 | Tempo | http://localhost:3200 | Trace storage |
 | OTel Collector (gRPC) | localhost:4319 | Send traces, metrics, logs via OTLP/gRPC |
 | OTel Collector (HTTP) | localhost:4320 | Send traces, metrics, logs via OTLP/HTTP |

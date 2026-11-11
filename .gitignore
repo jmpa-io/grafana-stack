@@ -1,2 +1,4 @@
 # Community dashboards fetched by `make download-dashboards` (grafana/dashboards/download.sh).
 /grafana/dashboards/*/
+# ...except the hand-written ones.
+!/grafana/dashboards/custom/
