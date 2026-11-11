@@ -40,7 +40,7 @@ jobs:
   post-to-slack:
     needs: [lint]
     if: always()
-    uses: jmpa-io/pipelines/.github/workflows/99-post-to-slack.yml@462acc0d5973ca1f6c014cbd422c266e576ddf17 # v1.0.0
+    uses: jmpa-io/pipelines/.github/workflows/99-post-to-slack.yml@0877ff2d3aa9a4add377ad679135ab5a5c3e2b8a # v1.1.0
     with:
       needs: ${{ toJSON(needs) }}
     secrets:
