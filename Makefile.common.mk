@@ -156,7 +156,7 @@ CLOUDFORMATION_ROOT_DIRECTORY ?= ./cf
 # ---
 
 # The paths to any given Git submodules found in this repository.
-GIT_SUBMODULES := $(shell git config --file $(shell while [ ! -d .git ]; do cd ..; done; pwd)/.gitmodules --get-regexp path | awk '{ print $$2 }')
+GIT_SUBMODULES := $(shell git config --file $(shell while [ ! -e .git ] && [ "$$PWD" != / ]; do cd ..; done; pwd)/.gitmodules --get-regexp path | awk '{ print $$2 }')
 
 # A filter for ignoring Git submodules when using 'find' commands in this Makefile.
 FILTER_IGNORE_SUBMODULES = $(foreach module,$(GIT_SUBMODULES),-not \( -path "./$(module)" -o -path "./$(module)/*" \))
@@ -731,7 +731,7 @@ else
 		-v \
 		--tb=short \
 		--cov=src \
-		--cov-config=$(shell while [ ! -d .git ]; do cd ..; done; pwd)/.coveragerc \
+		--cov-config=$(shell while [ ! -e .git ] && [ "$$PWD" != / ]; do cd ..; done; pwd)/.coveragerc \
 		--cov-report=xml:$@ \
 		--cov-report=term \
 		.
